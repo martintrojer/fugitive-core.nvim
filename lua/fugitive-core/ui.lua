@@ -60,9 +60,23 @@ function M.info(msg)
   vim.notify(msg, vim.log.levels.INFO)
 end
 
---- Show a confirmation dialog. Returns true if user confirms.
+--- Show a confirmation dialog. Appends "?" if not present. Returns true if user confirms.
 function M.confirm(message)
+  if not message:match("[%?!]$") then
+    message = message .. "?"
+  end
   return vim.fn.confirm(message, "&Yes\n&No", 2) == 1
+end
+
+--- Prompt for text input. Appends ": " to the prompt.
+--- opts: { default = "..." } (optional)
+function M.input(prompt, callback, opts)
+  vim.ui.input({ prompt = prompt .. ": ", default = opts and opts.default }, callback)
+end
+
+--- Prompt to select from a list. Appends ":" to the prompt.
+function M.select(items, prompt, callback)
+  vim.ui.select(items, { prompt = prompt .. ":" }, callback)
 end
 
 --- Set a custom statusline for a buffer.
