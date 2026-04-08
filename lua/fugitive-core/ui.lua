@@ -83,6 +83,13 @@ function M.open_pane(opts)
   opts = opts or {}
   local cmd = M.get_config().open_mode == "tab" and "tabnew" or (opts.split_cmd or "split")
   vim.cmd(cmd)
+  -- Mark the stray [No Name] buffer from tabnew so it gets wiped
+  -- as soon as the caller sets a real buffer in this window
+  if cmd == "tabnew" then
+    local stray = vim.api.nvim_get_current_buf()
+    vim.bo[stray].buflisted = false
+    vim.bo[stray].bufhidden = "wipe"
+  end
 end
 
 --- Close command appropriate for open_mode (close split or tab).
