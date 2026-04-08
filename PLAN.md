@@ -165,9 +165,15 @@ fugitive-core.nvim/        # shared dependency
    - Plugin `ansi.lua` → re-exports `fugitive-core.ansi` directly
    - Plugin `setup()` calls `require("fugitive-core").setup(nil, config)` to propagate config
    - ~1260 lines removed across both plugins
-4. **NEXT:** Extract view modules one at a time, starting with `describe.lua` (simplest)
-5. Move `diff.lua`, `browse.lua`, `completion.lua` next
-6. Then `status.lua`, `bookmark.lua`, `annotate.lua`
+4. ~~Extract `describe.lua`~~ **DONE**
+   - Core `views/describe.lua` provides `open_editor()` framework
+   - Plugins keep VCS-specific get_description, save callbacks, navigation keymaps
+5. ~~Move `diff.lua`, `browse.lua`, `completion.lua`~~ **DONE**
+   - Core `views/browse.lua`: parse_remote_url, build_file/commit_url, open_url, line_range
+   - Core `views/diff.lua`: show() framework + parse_diff_files helper
+   - Core `completion.lua`: parse_commands for CLI help parsing
+   - Plugins keep VCS-specific: get_diff, keymaps, remote resolution, aliases, revisions
+6. **NEXT:** `status.lua`, `bookmark.lua`, `annotate.lua`
 7. Finally `log.lua` (most complex, most VCS-specific)
 8. Each step: verify both plugins still work before moving to next
 
