@@ -32,6 +32,41 @@ function M.parse_remote_url(url)
   return nil, "Unsupported or unrecognized remote URL: " .. url
 end
 
+--- Try to build a URL from configured custom forges.
+--- Forges are configured in setup({ forges = { { match = "pattern", url = "...{path}...{lines}" }, ... } })
+--- URL template placeholders: {path}, {rev}, {lines}
+--- Returns url or nil if no forge matched.
+function M.build_custom_file_url(remote_url, path, line_start, line_end)
+  local forges = require("fugitive-core").config.forges
+  if not forges then
+    return nil
+  end
+
+  for _, forge in ipairs(forges) do
+    if remote_url:match(forge.match) then
+      local encoded_path = path:gsub(" ", "%%20")
+      local url = forge.url:gsub("{path}", encoded_path)
+      url = url:gsub("{rev}", "")
+
+      if line_start and url:match("{lines}") then
+        local lines = tostring(line_start)
+        if line_end and line_end ~= line_start then
+          lines = lines .. "-" .. line_end
+        end
+        url = url:gsub("{lines}", lines)
+      else
+        -- Remove lines placeholder and any preceding ? or &
+        url = url:gsub("[%?&]lines={lines}", "")
+        url = url:gsub("{lines}", "")
+      end
+
+      return url
+    end
+  end
+
+  return nil
+end
+
 --- Build a web URL for a file on GitHub/GitLab-style forges.
 function M.build_file_url(remote, path, rev, line_start, line_end)
   if not remote or not remote.web_base or not path or not rev then
