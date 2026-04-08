@@ -178,7 +178,11 @@ fugitive-core.nvim/        # shared dependency
      inline diff state management (get/set/shift_inline_ranges)
    - Core `views/annotate.lua`: resolve_filename, open_split with vsplit+scrollbind
    - Plugins keep VCS-specific: keymaps, syntax highlighting, inline diff rendering, parsers
-7. **NEXT:** `log.lua` (most complex, most VCS-specific)
+7. ~~`log.lua` (most complex, most VCS-specific)~~ **DONE**
+   - Core `ui.lua`: added `save_view()` / `restore_view()` for cursor + viewport preservation
+   - sl-fugitive: refactored refresh() to use core save/restore
+   - jj-fugitive: added cursor preservation on log refresh (was missing), using core save/restore
+   - Log modules remain VCS-specific (sl: workspace status, stack ops; jj: template system, rev markers)
 8. Each step: verify both plugins still work before moving to next
 
 ## Verification

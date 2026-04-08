@@ -235,6 +235,37 @@ function M.open_sidebyside(left_content, left_name, right_content, right_name, f
   return left, right
 end
 
+--- Save cursor position and viewport for a buffer window.
+--- Returns a state table (or nil if the buffer has no visible window).
+function M.save_view(bufnr)
+  local win = vim.fn.bufwinid(bufnr)
+  if win == -1 then
+    return nil
+  end
+  return {
+    win = win,
+    cursor = vim.api.nvim_win_get_cursor(win),
+    topline = vim.fn.getwininfo(win)[1].topline,
+  }
+end
+
+--- Restore cursor position and viewport, clamped to buffer size.
+function M.restore_view(bufnr, state)
+  if not state or not vim.api.nvim_win_is_valid(state.win) then
+    return
+  end
+  local line_count = vim.api.nvim_buf_line_count(bufnr)
+  if state.cursor then
+    local row = math.min(state.cursor[1], line_count)
+    pcall(vim.api.nvim_win_set_cursor, state.win, { row, state.cursor[2] })
+  end
+  if state.topline then
+    vim.api.nvim_win_call(state.win, function()
+      vim.fn.winrestview({ topline = math.min(state.topline, line_count) })
+    end)
+  end
+end
+
 --- Extract a hex node ID (10+ chars) from a line.
 function M.node_from_line(line)
   if not line then
