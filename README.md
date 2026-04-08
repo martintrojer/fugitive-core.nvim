@@ -12,13 +12,13 @@ rendering, and view frameworks used by:
 
 | Module | Description |
 |--------|-------------|
-| `ui` | Scratch buffers, keymaps, pane management, popups, side-by-side diff, cursor save/restore |
+| `ui` | Scratch buffers, keymaps, pane management, popups, side-by-side diff, cursor save/restore, prompt helpers (`input`/`select`/`confirm`), `setup_view_keymaps` |
 | `ansi` | ANSI escape sequence parsing, colored buffer creation and update, diff highlighting |
 | `completion` | CLI help output parser for tab completion |
 | `views/describe` | Commit message editor framework (`open_editor`) |
 | `views/diff` | Unified diff show/refresh framework |
-| `views/browse` | Remote URL parsing, file/commit URL construction, browser opening |
-| `views/list` | Show/refresh framework for list views (status, bookmark), inline diff state |
+| `views/browse` | Remote URL parsing, file/commit URL construction, custom forge support, browser opening |
+| `views/list` | Show/refresh framework for list views (status, bookmark), inline diff state and collapse |
 | `views/annotate` | Scroll-locked vsplit layout for annotation/blame views |
 
 ## Requirements
@@ -59,10 +59,11 @@ git clone https://github.com/martintrojer/fugitive-core.nvim ~/.local/share/nvim
 
 ## Writing a VCS plugin with fugitive-core
 
-Each VCS plugin is a thin adapter layer. The plugin's `ui.lua` and `ansi.lua`
-delegate to the core via `setmetatable(__index)`, adding only VCS-specific
-functions. View modules call core frameworks with callbacks for VCS-specific
-data fetching, formatting, and keymaps.
+Each VCS plugin is a thin adapter layer. The plugin's `ui.lua` delegates to
+the core via `setmetatable(__index)`, adding only VCS-specific functions.
+Plugins use `require("fugitive-core.ansi")` directly. View modules call core
+frameworks with callbacks for VCS-specific data fetching, formatting, and
+keymaps.
 
 ```lua
 -- Example: plugin setup propagates config to core
