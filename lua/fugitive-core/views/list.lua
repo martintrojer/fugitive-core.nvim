@@ -89,6 +89,31 @@ function M.set_inline_state(bufnr, var_name, state)
   pcall(vim.api.nvim_buf_set_var, bufnr, var_name, state)
 end
 
+--- Collapse an inline diff if cursor is inside an expanded block.
+--- Returns true if a block was collapsed (caller should return early).
+function M.collapse_inline_at_cursor(bufnr, var_name)
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  local line_nr = cursor[1]
+  local state = M.get_inline_state(bufnr, var_name)
+
+  for i, item in ipairs(state) do
+    if line_nr >= item.start_line and line_nr <= item.end_line then
+      vim.bo[bufnr].modifiable = true
+      vim.api.nvim_buf_set_lines(bufnr, item.start_line - 1, item.end_line, false, {})
+      vim.bo[bufnr].modifiable = false
+      vim.bo[bufnr].modified = false
+
+      local removed = item.end_line - item.start_line + 1
+      table.remove(state, i)
+      M.shift_inline_ranges(state, item.start_line - 1, -removed)
+      M.set_inline_state(bufnr, var_name, state)
+      pcall(vim.api.nvim_win_set_cursor, 0, { item.start_line - 1, 0 })
+      return true
+    end
+  end
+  return false
+end
+
 --- Shift inline diff ranges after inserting or removing lines.
 function M.shift_inline_ranges(state, from_line, delta)
   for _, item in ipairs(state) do
