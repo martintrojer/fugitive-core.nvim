@@ -159,13 +159,13 @@ fugitive-core.nvim/        # shared dependency
      buffer variable unified to `fugitive_plugin_buffer`
    - `init.lua` created (minimal: stores adapter + config)
    - `luacheck` and `stylua` pass clean
-3. **NEXT:** Update both plugins to depend on fugitive-core `ui`/`ansi`
-   - Replace `require("sl-fugitive.ui")` / `require("jj-fugitive.ui")` with
-     `require("fugitive-core.ui")` for shared functions
-   - Keep plugin-local `ui.lua` as a thin wrapper re-exporting core +
-     VCS-specific functions (`file_at_rev`, `show_aliases`)
-   - Same pattern for `ansi.lua` — re-export core + set `opts.prefix`
-4. Extract view modules one at a time, starting with `describe.lua` (simplest)
+3. ~~Update both plugins to depend on fugitive-core `ui`/`ansi`~~ **DONE**
+   - Plugin `ui.lua` → thin `setmetatable(__index)` wrapper over `fugitive-core.ui`
+   - `file_at_rev` stays in sl-fugitive; `file_at_rev` + `show_aliases` stay in jj-fugitive
+   - Plugin `ansi.lua` → re-exports `fugitive-core.ansi` directly
+   - Plugin `setup()` calls `require("fugitive-core").setup(nil, config)` to propagate config
+   - ~1260 lines removed across both plugins
+4. **NEXT:** Extract view modules one at a time, starting with `describe.lua` (simplest)
 5. Move `diff.lua`, `browse.lua`, `completion.lua` next
 6. Then `status.lua`, `bookmark.lua`, `annotate.lua`
 7. Finally `log.lua` (most complex, most VCS-specific)
