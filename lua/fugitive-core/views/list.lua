@@ -34,9 +34,7 @@ function M.show(opts)
     opts.setup(bufnr, not existing)
   end
 
-  if not existing then
-    ui.ensure_visible(bufnr)
-  end
+  ui.ensure_visible(bufnr)
 
   if opts.first_item then
     local win = vim.fn.bufwinid(bufnr)
