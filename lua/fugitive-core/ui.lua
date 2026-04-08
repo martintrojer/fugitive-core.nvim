@@ -248,6 +248,39 @@ function M.restore_view(bufnr, state)
   end
 end
 
+--- Setup common view-switching keymaps.
+--- opts: table of optional callbacks:
+---   close     — q keymap (default: close_cmd)
+---   log       — gl keymap
+---   status    — gs keymap
+---   bookmark  — gb keymap
+---   review    — gR keymap (nil to skip)
+---   refresh   — R keymap (nil to skip)
+---   help      — g? keymap (nil to skip)
+function M.setup_view_keymaps(bufnr, opts)
+  M.map(bufnr, "n", "q", opts.close or function()
+    vim.cmd(M.close_cmd())
+  end)
+  if opts.log then
+    M.map(bufnr, "n", "gl", opts.log)
+  end
+  if opts.status then
+    M.map(bufnr, "n", "gs", opts.status)
+  end
+  if opts.bookmark then
+    M.map(bufnr, "n", "gb", opts.bookmark)
+  end
+  if opts.review then
+    M.map(bufnr, "n", "gR", opts.review)
+  end
+  if opts.refresh then
+    M.map(bufnr, "n", "R", opts.refresh)
+  end
+  if opts.help then
+    M.map(bufnr, "n", "g?", opts.help)
+  end
+end
+
 --- Extract a hex node ID (10+ chars) from a line.
 function M.node_from_line(line)
   if not line then
