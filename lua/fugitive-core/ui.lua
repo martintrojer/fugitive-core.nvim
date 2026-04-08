@@ -224,6 +224,10 @@ end
 --- left_name, right_name: buffer names
 --- filename: used for filetype detection (optional)
 function M.open_sidebyside(left_content, left_name, right_content, right_name, filename)
+  -- Remember where we came from so q can restore it
+  local prev_tab = vim.api.nvim_get_current_tabpage()
+  local prev_win = vim.api.nvim_get_current_win()
+
   -- Always use a tab for side-by-side (needs full width)
   M.open_pane({ split_cmd = "tabnew" })
 
@@ -247,8 +251,38 @@ function M.open_sidebyside(left_content, left_name, right_content, right_name, f
   vim.api.nvim_set_current_buf(right)
   vim.cmd("windo diffthis")
 
+  local diff_tab = vim.api.nvim_get_current_tabpage()
+
+  local function close_sidebyside()
+    -- Always try to go back where we came from
+    if vim.api.nvim_tabpage_is_valid(prev_tab) and prev_tab ~= diff_tab then
+      vim.api.nvim_set_current_tabpage(prev_tab)
+      if vim.api.nvim_win_is_valid(prev_win) then
+        vim.api.nvim_set_current_win(prev_win)
+      end
+      -- Now safe to close the diff tab
+      if vim.api.nvim_tabpage_is_valid(diff_tab) then
+        local ok = pcall(vim.cmd, "tabclose " .. vim.api.nvim_tabpage_get_number(diff_tab))
+        if not ok then
+          -- Wipe the diff buffers manually
+          pcall(vim.api.nvim_buf_delete, left, { force = true })
+          pcall(vim.api.nvim_buf_delete, right, { force = true })
+        end
+      end
+    elseif #vim.api.nvim_list_tabpages() > 1 then
+      vim.cmd("tabclose")
+    else
+      -- Last tab, no prev — close both windows, find a real buffer
+      pcall(vim.api.nvim_buf_delete, left, { force = true })
+      pcall(vim.api.nvim_buf_delete, right, { force = true })
+      if vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf()) == "" then
+        vim.cmd(M.close_cmd())
+      end
+    end
+  end
+
   for _, buf in ipairs({ left, right }) do
-    M.map(buf, "n", "q", "<cmd>tabclose<CR>")
+    M.map(buf, "n", "q", close_sidebyside)
   end
 
   return left, right
