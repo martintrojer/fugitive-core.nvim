@@ -46,9 +46,11 @@ end
 function M.parse_diff_files(bufnr)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local files = {}
+  local seen = {}
   for _, line in ipairs(lines) do
     local f = line:match("^diff %-%-git a/.+ b/(.+)$")
-    if f and not vim.tbl_contains(files, f) then
+    if f and not seen[f] then
+      seen[f] = true
       table.insert(files, f)
     end
   end

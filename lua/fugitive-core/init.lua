@@ -4,10 +4,7 @@ M.config = {
   open_mode = "split",
 }
 
-M.adapter = nil
-
-function M.setup(adapter, opts)
-  M.adapter = adapter
+function M.setup(_, opts)
   M.config = vim.tbl_deep_extend("force", M.config, opts or {})
 end
 

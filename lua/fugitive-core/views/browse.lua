@@ -7,44 +7,26 @@ function M.parse_remote_url(url)
     return nil, "Empty remote URL"
   end
 
-  local host, owner, repo
+  local patterns = {
+    { "^git@([^:]+):([^/]+)/(.+)$", nil },
+    { "^ssh://git@([^/]+)/([^/]+)/(.+?)/?$", nil },
+    { "^(https?)://([^/]+)/([^/]+)/([^/]+)$", true },
+  }
 
-  host, owner, repo = url:match("^git@([^:]+):([^/]+)/(.+)%.git$")
-  if not host then
-    host, owner, repo = url:match("^git@([^:]+):([^/]+)/([^%.]+)$")
-  end
-  if host and owner and repo then
-    return {
-      host = host,
-      owner = owner,
-      repo = repo,
-      web_base = string.format("https://%s/%s/%s", host, owner, repo),
-    }
-  end
-
-  host, owner, repo = url:match("^ssh://git@([^/]+)/([^/]+)/(.+)%.git/?$")
-  if not host then
-    host, owner, repo = url:match("^ssh://git@([^/]+)/([^/]+)/([^%./]+)/?$")
-  end
-  if host and owner and repo then
-    return {
-      host = host,
-      owner = owner,
-      repo = repo,
-      web_base = string.format("https://%s/%s/%s", host, owner, repo),
-    }
-  end
-
-  local scheme
-  scheme, host, owner, repo = url:match("^(https?)://([^/]+)/([^/]+)/([^/]+)$")
-  if host and owner and repo then
-    repo = repo:gsub("%.git$", ""):gsub("/$", "")
-    return {
-      host = host,
-      owner = owner,
-      repo = repo,
-      web_base = string.format("%s://%s/%s/%s", scheme, host, owner, repo),
-    }
+  for _, pat in ipairs(patterns) do
+    local captures = { url:match(pat[1]) }
+    if #captures > 0 then
+      local host, owner, repo, scheme
+      if pat[2] then
+        scheme, host, owner, repo = captures[1], captures[2], captures[3], captures[4]
+      else
+        host, owner, repo = captures[1], captures[2], captures[3]
+      end
+      repo = repo:gsub("%.git$", ""):gsub("/$", "")
+      local base = scheme and string.format("%s://%s/%s/%s", scheme, host, owner, repo)
+        or string.format("https://%s/%s/%s", host, owner, repo)
+      return { host = host, owner = owner, repo = repo, web_base = base }
+    end
   end
 
   return nil, "Unsupported or unrecognized remote URL: " .. url
@@ -90,54 +72,27 @@ function M.build_commit_url(remote, rev)
   return string.format("%s/commit/%s", remote.web_base, rev)
 end
 
---- Open a URL in the default browser. Falls back to clipboard.
+--- Open a URL in the default browser.
 function M.open_url(url)
   if not url then
     return false
   end
-
-  if vim.ui and vim.ui.open then
-    vim.ui.open(url)
-    return true
-  end
-
-  if vim.fn.has("mac") == 1 then
-    vim.fn.jobstart({ "open", url }, { detach = true })
-    return true
-  end
-  if vim.fn.executable("xdg-open") == 1 then
-    vim.fn.jobstart({ "xdg-open", url }, { detach = true })
-    return true
-  end
-  if vim.fn.has("win32") == 1 then
-    vim.fn.jobstart({ "cmd", "/c", "start", url }, { detach = true })
-    return true
-  end
-
-  vim.fn.setreg("+", url)
-  vim.notify("Browse URL copied to clipboard: " .. url, vim.log.levels.INFO)
+  vim.ui.open(url)
   return true
 end
 
 --- Get current visual selection or cursor line range.
 --- Returns start_line, end_line (end_line is nil for single line).
 function M.line_range()
-  local start_line
-  local end_line
   local mode = vim.fn.mode()
 
   if mode:match("^[vV\22]") then
-    local s = vim.fn.getpos("<")[2]
-    local e = vim.fn.getpos(">")[2]
-    if s and e then
-      start_line = math.min(s, e)
-      end_line = math.max(s, e)
-    end
-  else
-    start_line = vim.fn.line(".")
+    local s = vim.fn.getpos("v")[2]
+    local e = vim.fn.getpos(".")[2]
+    return math.min(s, e), math.max(s, e)
   end
 
-  return start_line, end_line
+  return vim.fn.line("."), nil
 end
 
 return M

@@ -83,16 +83,6 @@ function M.open_pane(opts)
   opts = opts or {}
   local cmd = M.get_config().open_mode == "tab" and "tabnew" or (opts.split_cmd or "split")
   vim.cmd(cmd)
-
-  -- Clean up the [No Name] buffer that tabnew creates
-  if cmd == "tabnew" then
-    local stray = vim.api.nvim_get_current_buf()
-    vim.schedule(function()
-      if vim.api.nvim_buf_is_valid(stray) and vim.api.nvim_buf_get_name(stray) == "" then
-        pcall(vim.api.nvim_buf_delete, stray, { force = true })
-      end
-    end)
-  end
 end
 
 --- Close command appropriate for open_mode (close split or tab).
@@ -178,12 +168,8 @@ function M.help_popup(title, lines, opts)
     end
   end
 
-  vim.keymap.set("n", "<CR>", close, { buffer = help_buf, noremap = true, silent = true })
-  vim.keymap.set("n", "<Esc>", close, { buffer = help_buf, noremap = true, silent = true })
-  vim.keymap.set("n", "q", close, { buffer = help_buf, noremap = true, silent = true })
-
-  for _, key in ipairs(opts.close_keys or {}) do
-    vim.keymap.set("n", key, close, { buffer = help_buf, noremap = true, silent = true })
+  for _, key in ipairs(vim.list_extend({ "<CR>", "<Esc>", "q" }, opts.close_keys or {})) do
+    M.map(help_buf, "n", key, close)
   end
 
   -- Close popup when it loses focus
@@ -204,15 +190,11 @@ function M.open_sidebyside(left_content, left_name, right_content, right_name, f
   -- Always use a tab for side-by-side (needs full width)
   M.open_pane({ split_cmd = "tabnew" })
 
-  local left = M.create_scratch_buffer({ name = left_name, modifiable = true })
-  vim.api.nvim_buf_set_lines(left, 0, -1, false, vim.split(left_content, "\n"))
-  vim.bo[left].modifiable = false
-  vim.bo[left].modified = false
+  local left = M.create_scratch_buffer({ name = left_name })
+  M.set_buf_lines(left, vim.split(left_content, "\n"))
 
-  local right = M.create_scratch_buffer({ name = right_name, modifiable = true })
-  vim.api.nvim_buf_set_lines(right, 0, -1, false, vim.split(right_content, "\n"))
-  vim.bo[right].modifiable = false
-  vim.bo[right].modified = false
+  local right = M.create_scratch_buffer({ name = right_name })
+  M.set_buf_lines(right, vim.split(right_content, "\n"))
 
   if filename then
     local ft = vim.filetype.match({ filename = filename })
@@ -271,9 +253,8 @@ function M.node_from_line(line)
   if not line then
     return nil
   end
-  return line:match(
-    "%f[%x]([0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]+)%f[^%x]"
-  )
+  local match = line:match("%f[%x]([0-9a-f][0-9a-f]+)%f[^%x]")
+  return match and #match >= 10 and match or nil
 end
 
 return M

@@ -35,21 +35,15 @@ function M.open_split(opts)
 
   local ann_buf = ui.create_scratch_buffer({
     name = opts.ann_name,
-    modifiable = true,
     bufhidden = "hide",
   })
   local src_buf = ui.create_scratch_buffer({
     name = opts.src_name,
-    modifiable = true,
     bufhidden = "hide",
   })
 
-  vim.api.nvim_buf_set_lines(ann_buf, 0, -1, false, opts.annotations)
-  vim.api.nvim_buf_set_lines(src_buf, 0, -1, false, opts.source_lines)
-  vim.bo[ann_buf].modifiable = false
-  vim.bo[src_buf].modifiable = false
-  vim.bo[ann_buf].modified = false
-  vim.bo[src_buf].modified = false
+  ui.set_buf_lines(ann_buf, opts.annotations)
+  ui.set_buf_lines(src_buf, opts.source_lines)
 
   if opts.filename then
     local ft = vim.filetype.match({ filename = opts.filename })

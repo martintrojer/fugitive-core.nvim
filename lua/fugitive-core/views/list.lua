@@ -39,10 +39,13 @@ function M.show(opts)
   end
 
   if opts.first_item then
-    for i, line in ipairs(lines) do
-      if opts.first_item(line) then
-        pcall(vim.api.nvim_win_set_cursor, 0, { i, 0 })
-        break
+    local win = vim.fn.bufwinid(bufnr)
+    if win ~= -1 then
+      for i, line in ipairs(lines) do
+        if opts.first_item(line) then
+          pcall(vim.api.nvim_win_set_cursor, win, { i, 0 })
+          break
+        end
       end
     end
   end

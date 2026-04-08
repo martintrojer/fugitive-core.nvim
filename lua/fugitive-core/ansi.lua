@@ -3,6 +3,8 @@ local M = {}
 local ns = vim.api.nvim_create_namespace("fugitive_core_ansi")
 M.ns = ns
 
+local buf_counter = 0
+
 -- ANSI color code constants
 local ANSI_CODES = {
   RESET = "0",
@@ -89,7 +91,12 @@ local function color_256_lookup(idx)
     end
     return "White"
   end
-  -- Grayscale (232-255)
+  -- Grayscale (232-255): 24 shades from near-black to near-white
+  if n <= 237 then
+    return "Black"
+  elseif n <= 243 then
+    return "DarkGray"
+  end
   return "White"
 end
 
@@ -287,24 +294,30 @@ function M.setup_diff_highlighting(bufnr, highlights, opts)
       elseif group == "Bold" then
         group = prefix .. "Bold"
       elseif group:match("^Bold") then
-        if not defined_groups[group] then
+        local prefixed = "FcAnsi" .. group
+        if not defined_groups[prefixed] then
           local color_name = group:sub(5)
           local link = color_to_theme[color_name]
           if link then
             local theme_hl = vim.api.nvim_get_hl(0, { name = link, link = false })
             if theme_hl.fg then
-              pcall(vim.api.nvim_set_hl, 0, group, { fg = theme_hl.fg, bold = true })
+              pcall(vim.api.nvim_set_hl, 0, prefixed, { fg = theme_hl.fg, bold = true })
             else
-              pcall(vim.api.nvim_set_hl, 0, group, { link = link })
+              pcall(vim.api.nvim_set_hl, 0, prefixed, { link = link })
             end
           end
-          defined_groups[group] = true
+          defined_groups[prefixed] = true
         end
+        group = prefixed
       else
         local link = color_to_theme[group]
-        if link and not defined_groups[group] then
-          pcall(vim.api.nvim_set_hl, 0, group, { link = link })
-          defined_groups[group] = true
+        if link then
+          local prefixed = "FcAnsi" .. group
+          if not defined_groups[prefixed] then
+            pcall(vim.api.nvim_set_hl, 0, prefixed, { link = link })
+            defined_groups[prefixed] = true
+          end
+          group = prefixed
         end
       end
 
@@ -319,8 +332,8 @@ function M.create_colored_buffer(content, buffer_name, header_lines, opts)
   opts = opts or {}
 
   local ui = require("fugitive-core.ui")
-  local timestamp = os.time()
-  local unique_name = string.format("%s [%d]", buffer_name, timestamp)
+  buf_counter = buf_counter + 1
+  local unique_name = string.format("%s [%d]", buffer_name, buf_counter)
   local bufnr = ui.create_scratch_buffer({
     name = unique_name,
     modifiable = true,
