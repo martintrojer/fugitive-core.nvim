@@ -173,8 +173,12 @@ fugitive-core.nvim/        # shared dependency
    - Core `views/diff.lua`: show() framework + parse_diff_files helper
    - Core `completion.lua`: parse_commands for CLI help parsing
    - Plugins keep VCS-specific: get_diff, keymaps, remote resolution, aliases, revisions
-6. **NEXT:** `status.lua`, `bookmark.lua`, `annotate.lua`
-7. Finally `log.lua` (most complex, most VCS-specific)
+6. ~~`status.lua`, `bookmark.lua`, `annotate.lua`~~ **DONE**
+   - Core `views/list.lua`: show/refresh framework for list-type views,
+     inline diff state management (get/set/shift_inline_ranges)
+   - Core `views/annotate.lua`: resolve_filename, open_split with vsplit+scrollbind
+   - Plugins keep VCS-specific: keymaps, syntax highlighting, inline diff rendering, parsers
+7. **NEXT:** `log.lua` (most complex, most VCS-specific)
 8. Each step: verify both plugins still work before moving to next
 
 ## Verification
