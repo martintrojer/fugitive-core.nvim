@@ -86,7 +86,8 @@ function M.open_pane(opts)
 end
 
 --- Close command appropriate for open_mode (close split or tab).
---- Falls back to opening a blank buffer when it's the last tab or window.
+--- When it's the last window/tab, switches to the alternate buffer
+--- or a listed buffer instead of creating a new empty one.
 function M.close_cmd()
   if M.get_config().open_mode == "tab" then
     if #vim.api.nvim_list_tabpages() > 1 then
@@ -95,6 +96,21 @@ function M.close_cmd()
   else
     if #vim.api.nvim_tabpage_list_wins(0) > 1 then
       return "close"
+    end
+  end
+  -- Try alternate buffer first
+  local alt = vim.fn.bufnr("#")
+  if alt > 0 and vim.api.nvim_buf_is_valid(alt) and alt ~= vim.api.nvim_get_current_buf() then
+    return "buffer #"
+  end
+  -- Try any other listed buffer
+  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+    if
+      vim.api.nvim_buf_is_valid(bufnr)
+      and vim.bo[bufnr].buflisted
+      and bufnr ~= vim.api.nvim_get_current_buf()
+    then
+      return "buffer " .. bufnr
     end
   end
   return "enew"
