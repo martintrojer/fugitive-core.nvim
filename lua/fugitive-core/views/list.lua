@@ -114,6 +114,20 @@ function M.collapse_inline_at_cursor(bufnr, var_name)
   return false
 end
 
+--- Get the file associated with the current cursor position.
+--- If the cursor is inside an expanded inline diff block, returns the block's file.
+--- Otherwise returns nil (caller should try file_from_line on the current line).
+function M.file_from_inline_state(bufnr, var_name)
+  local line_nr = vim.api.nvim_win_get_cursor(0)[1]
+  local state = M.get_inline_state(bufnr, var_name)
+  for _, item in ipairs(state) do
+    if line_nr >= item.start_line and line_nr <= item.end_line then
+      return item.file
+    end
+  end
+  return nil
+end
+
 --- Shift inline diff ranges after inserting or removing lines.
 function M.shift_inline_ranges(state, from_line, delta)
   for _, item in ipairs(state) do
