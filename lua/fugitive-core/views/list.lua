@@ -128,6 +128,18 @@ function M.file_from_inline_state(bufnr, var_name)
   return nil
 end
 
+--- Format VCS output into display lines with a header.
+--- Filters empty lines from output.
+function M.format_lines(title, output)
+  local lines = { "", "# " .. title, "# Press g? for help", "" }
+  for _, line in ipairs(vim.split(output, "\n")) do
+    if line ~= "" then
+      table.insert(lines, line)
+    end
+  end
+  return lines
+end
+
 --- Shift inline diff ranges after inserting or removing lines.
 function M.shift_inline_ranges(state, from_line, delta)
   for _, item in ipairs(state) do

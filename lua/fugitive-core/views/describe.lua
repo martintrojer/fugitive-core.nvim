@@ -15,14 +15,9 @@ function M.open_editor(buffer_name, initial_text, help_lines, save_fn, opts)
     bufhidden = "hide",
   })
 
-  local lines = {}
-  for _, h in ipairs(help_lines) do
-    table.insert(lines, h)
-  end
+  local lines = vim.list_extend({}, help_lines)
   table.insert(lines, "")
-  for _, l in ipairs(vim.split(initial_text or "", "\n", { plain = true })) do
-    table.insert(lines, l)
-  end
+  vim.list_extend(lines, vim.split(initial_text or "", "\n", { plain = true }))
 
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
 

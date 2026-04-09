@@ -2,24 +2,11 @@
 
 ## Architecture
 
-- [ ] Split `ui.lua` — it's becoming a grab-bag (buffers, keymaps, prompts, file ops, views, node parsing)
-- [ ] `init.lua` is almost empty — config propagation feels like a workaround
+- [ ] Split `ui.lua` — 300+ lines of unrelated concerns (buffers, keymaps, prompts, file ops, side-by-side, view switching, node parsing)
+- [ ] Config propagation is backwards — plugins own config, copy to core via `setup()`. Core's `init.lua` is just a global holder. A third plugin would race. Adapter interface would fix this
 - [ ] `views/diff.lua` is very thin (show + parse_diff_files) — may not justify its own file
-- [ ] `M.ns` exported from `ansi.lua` but never used externally — remove or document
-
-## Cleanup
-
-- [ ] `highlight default link` uses `vim.cmd` strings instead of `vim.api.nvim_set_hl` — inconsistent with rest of file
-- [ ] `describe.lua` and `process_diff_content` use manual `table.insert` loops — use `vim.list_extend`
 
 ## Plugin helpers
 
-- [ ] Plugin-level `make_view_callbacks()` to eliminate repeated `close_cmd(); require("X").show()` pattern
-
-## Tests
-
-- [ ] Unit tests for pure functions: `parse_remote_url`, `parse_ansi_colors`, `node_from_line`, `line_range`, `build_file_url`, `build_custom_file_url`
-
-## Help text
-
-- [ ] `g?` help content is maintained manually per view — consider generating from keymap registrations
+- [ ] `make_view_callbacks(current_view)` factory — every view builds the same `{ log = function() close(); show() end, ... }` table with minor variations
+- [ ] `g?` help text is hand-written per view, drifts from actual keymaps — consider generating from keymap registrations

@@ -213,9 +213,7 @@ function M.process_diff_content(diff_content, header_lines)
   local all_highlights = {}
 
   if header_lines then
-    for _, line in ipairs(header_lines) do
-      table.insert(processed_lines, line)
-    end
+    vim.list_extend(processed_lines, header_lines)
   end
 
   local line_offset = header_lines and #header_lines or 0
@@ -241,10 +239,10 @@ function M.setup_diff_highlighting(bufnr, highlights, opts)
     vim.cmd("setlocal filetype=diff")
     vim.cmd("setlocal conceallevel=0")
 
-    vim.cmd(string.format("highlight default link %sAdd DiffAdd", prefix))
-    vim.cmd(string.format("highlight default link %sDelete DiffDelete", prefix))
-    vim.cmd(string.format("highlight default link %sChange DiffChange", prefix))
-    vim.cmd(string.format("highlight default %sBold gui=bold cterm=bold", prefix))
+    vim.api.nvim_set_hl(0, prefix .. "Add", { default = true, link = "DiffAdd" })
+    vim.api.nvim_set_hl(0, prefix .. "Delete", { default = true, link = "DiffDelete" })
+    vim.api.nvim_set_hl(0, prefix .. "Change", { default = true, link = "DiffChange" })
+    vim.api.nvim_set_hl(0, prefix .. "Bold", { default = true, bold = true })
 
     if opts.custom_syntax then
       for pattern, group in pairs(opts.custom_syntax) do
