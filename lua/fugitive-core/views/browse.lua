@@ -9,7 +9,7 @@ function M.parse_remote_url(url)
 
   local patterns = {
     { "^git@([^:]+):([^/]+)/(.+)$", nil },
-    { "^ssh://git@([^/]+)/([^/]+)/(.+?)/?$", nil },
+    { "^ssh://git@([^/]+)/([^/]+)/(.-)/?$", nil },
     { "^(https?)://([^/]+)/([^/]+)/([^/]+)$", true },
   }
 

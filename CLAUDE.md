@@ -56,7 +56,11 @@ highlighting, repo detection, review integration.
 ## Development
 
 ```bash
-luacheck lua/                      # lint
-stylua --check lua/                # format check
-stylua lua/                        # format fix
+luacheck lua/                                # lint
+stylua --check lua/                          # format check
+stylua lua/                                  # format fix
+nvim --headless -u tests/init.lua            # run tests
 ```
+
+Tests use [mini.test](https://github.com/echasnovski/mini.nvim/blob/main/readmes/mini-test.md).
+CI runs lint, format check, and tests via GitHub Actions.
