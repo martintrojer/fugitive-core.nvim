@@ -79,6 +79,27 @@ function M.select(items, prompt, callback)
   vim.ui.select(items, { prompt = prompt .. ":" }, callback)
 end
 
+--- Delete a file from the filesystem with confirmation.
+--- Returns true if deleted, false otherwise.
+function M.delete_file(filepath, repo_root)
+  local full = repo_root and (repo_root .. "/" .. filepath) or filepath
+  if not vim.loop.fs_stat(full) then
+    M.warn(filepath .. " does not exist")
+    return false
+  end
+  if not M.confirm("Delete " .. filepath) then
+    return false
+  end
+  local ok, err = os.remove(full)
+  if ok then
+    M.info("Deleted: " .. filepath)
+    return true
+  else
+    M.err("Failed to delete " .. filepath .. ": " .. (err or "unknown error"))
+    return false
+  end
+end
+
 --- Set a custom statusline for a buffer.
 function M.set_statusline(bufnr, text)
   vim.api.nvim_buf_call(bufnr, function()
