@@ -1,12 +1,25 @@
 # TODO
 
-## Unified VCS adapter interface
+## Architecture
 
-Currently plugins use per-module callbacks. A single adapter table per plugin
-(name, commands, parsers, mutations) passed to `core.setup()` would let the core
-own more of the view lifecycle and further shrink the plugins.
+- [ ] Split `ui.lua` — it's becoming a grab-bag (buffers, keymaps, prompts, file ops, views, node parsing)
+- [ ] `init.lua` is almost empty — config propagation feels like a workaround
+- [ ] `views/diff.lua` is very thin (show + parse_diff_files) — may not justify its own file
+- [ ] `M.ns` exported from `ansi.lua` but never used externally — remove or document
 
-## Slim down plugin modules
+## Cleanup
 
-With a unified adapter, each plugin could shrink toward just `init.lua` +
-a VCS-specific actions module.
+- [ ] `highlight default link` uses `vim.cmd` strings instead of `vim.api.nvim_set_hl` — inconsistent with rest of file
+- [ ] `describe.lua` and `process_diff_content` use manual `table.insert` loops — use `vim.list_extend`
+
+## Plugin helpers
+
+- [ ] Plugin-level `make_view_callbacks()` to eliminate repeated `close_cmd(); require("X").show()` pattern
+
+## Tests
+
+- [ ] Unit tests for pure functions: `parse_remote_url`, `parse_ansi_colors`, `node_from_line`, `line_range`, `build_file_url`, `build_custom_file_url`
+
+## Help text
+
+- [ ] `g?` help content is maintained manually per view — consider generating from keymap registrations

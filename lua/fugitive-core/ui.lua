@@ -100,6 +100,23 @@ function M.delete_file(filepath, repo_root)
   end
 end
 
+--- Open a file in the editor, resolving repo-relative paths.
+--- cmd: "edit" (default) or "split"/"vsplit".
+--- In tab mode, "edit" closes the current tab first.
+--- In split mode, "edit" just replaces the buffer in the current window.
+--- "split"/"vsplit" always keeps the current view.
+function M.open_file(file, repo_root, cmd)
+  cmd = cmd or "edit"
+  local path = file
+  if repo_root and not vim.startswith(file, "/") then
+    path = repo_root .. "/" .. file
+  end
+  if cmd == "edit" and M.get_config().open_mode == "tab" then
+    vim.cmd(M.close_cmd())
+  end
+  vim.cmd(cmd .. " " .. vim.fn.fnameescape(path))
+end
+
 --- Set a custom statusline for a buffer.
 function M.set_statusline(bufnr, text)
   vim.api.nvim_buf_call(bufnr, function()
@@ -244,7 +261,8 @@ end
 --- left_content, right_content: strings
 --- left_name, right_name: buffer names
 --- filename: used for filetype detection (optional)
-function M.open_sidebyside(left_content, left_name, right_content, right_name, filename)
+--- opts: { repo_root = "..." } for resolving the filename on `o`
+function M.open_sidebyside(left_content, left_name, right_content, right_name, filename, opts)
   -- Remember where we came from so q can restore it
   local prev_tab = vim.api.nvim_get_current_tabpage()
   local prev_win = vim.api.nvim_get_current_win()
@@ -267,10 +285,17 @@ function M.open_sidebyside(left_content, left_name, right_content, right_name, f
   end
 
   vim.api.nvim_set_current_buf(left)
+  local left_win = vim.api.nvim_get_current_win()
   vim.cmd("vsplit")
   vim.cmd("wincmd l")
   vim.api.nvim_set_current_buf(right)
-  vim.cmd("windo diffthis")
+  local right_win = vim.api.nvim_get_current_win()
+  vim.api.nvim_win_call(left_win, function()
+    vim.cmd("diffthis")
+  end)
+  vim.api.nvim_win_call(right_win, function()
+    vim.cmd("diffthis")
+  end)
 
   local diff_tab = vim.api.nvim_get_current_tabpage()
 
@@ -302,11 +327,18 @@ function M.open_sidebyside(left_content, left_name, right_content, right_name, f
     end
   end
 
+  local repo_root = opts and opts.repo_root
   for _, buf in ipairs({ left, right }) do
     M.map(buf, "n", "q", close_sidebyside)
+    if filename then
+      M.map(buf, "n", "o", function()
+        close_sidebyside()
+        M.open_file(filename, repo_root)
+      end)
+    end
   end
 
-  return left, right
+  return left, right, close_sidebyside
 end
 
 --- Save cursor position and viewport for a buffer window.

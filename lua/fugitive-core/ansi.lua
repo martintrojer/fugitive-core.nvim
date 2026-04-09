@@ -34,34 +34,34 @@ local ANSI_COLORS = {
   ["97"] = "White",
 }
 
+-- Basic 16 colors for 256-color lookup (hoisted to avoid per-call allocation)
+local BASIC_256 = {
+  [0] = "Black",
+  [1] = "Red",
+  [2] = "Green",
+  [3] = "Yellow",
+  [4] = "Blue",
+  [5] = "Magenta",
+  [6] = "Cyan",
+  [7] = "White",
+  [8] = "DarkGray",
+  [9] = "LightRed",
+  [10] = "LightGreen",
+  [11] = "LightYellow",
+  [12] = "LightBlue",
+  [13] = "LightMagenta",
+  [14] = "LightCyan",
+  [15] = "White",
+}
+
 -- Map 256-color palette index to a color name.
--- Covers the 16 basic colors plus common extended palette entries.
 local function color_256_lookup(idx)
   local n = tonumber(idx)
   if not n then
     return nil
   end
-  -- Basic 16 colors (0-15)
-  local basic = {
-    [0] = "Black",
-    [1] = "Red",
-    [2] = "Green",
-    [3] = "Yellow",
-    [4] = "Blue",
-    [5] = "Magenta",
-    [6] = "Cyan",
-    [7] = "White",
-    [8] = "DarkGray",
-    [9] = "LightRed",
-    [10] = "LightGreen",
-    [11] = "LightYellow",
-    [12] = "LightBlue",
-    [13] = "LightMagenta",
-    [14] = "LightCyan",
-    [15] = "White",
-  }
   if n <= 15 then
-    return basic[n]
+    return BASIC_256[n]
   end
   -- Extended 256-color palette (16-231): map to nearest basic color
   if n <= 231 then
@@ -139,16 +139,12 @@ function M.parse_ansi_colors(text)
         current_style.group = "Underlined"
       elseif codes == ANSI_CODES.NO_UNDERLINE then
         current_style.underline = false
-        if not current_style.bold and not (current_style.color or current_style.bg_color) then
+        if not current_style.bold and not current_style.color then
           current_style = {}
         end
       elseif codes == ANSI_CODES.DEFAULT_FG then
         current_style.color = nil
-        if
-          not current_style.bold
-          and not current_style.underline
-          and not current_style.bg_color
-        then
+        if not current_style.bold and not current_style.underline then
           current_style = {}
         end
       else
@@ -222,11 +218,11 @@ function M.process_diff_content(diff_content, header_lines)
     end
   end
 
+  local line_offset = header_lines and #header_lines or 0
   for i, line in ipairs(lines) do
     local clean_line, highlights = M.parse_ansi_colors(line)
     table.insert(processed_lines, clean_line)
 
-    local line_offset = header_lines and #header_lines or 0
     for _, hl in ipairs(highlights) do
       hl.line = i + line_offset - 1
       table.insert(all_highlights, hl)
